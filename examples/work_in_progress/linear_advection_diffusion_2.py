@@ -2,15 +2,24 @@ import sys
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-sys.path.insert(0, "..")
+sys.path.insert(0, "../..")
 from fem.mesh import Mesh
 from fem.weakform import WeakForm
 from fem.boundarycondition import BoundaryCondition
 from fem.model import Model
 
 
+def lambda_func(x):
+    return 4.5 + x
+
+
+def nu_func(x):
+    return 2.5 - x
+
+
 def source_function(x):
-    return math.pi * np.cos(math.pi*x) + math.pi ** 2 * np.sin(math.pi*x)
+    return lambda_func(x) * math.pi * np.cos(math.pi*x) + \
+           nu_func(x) * math.pi ** 2 * np.sin(math.pi*x)
 
 
 def analytical_solution(x):
@@ -19,32 +28,32 @@ def analytical_solution(x):
 
 def main():
     # The PDE is defined for 0 < x < 1:
-    #   PDE: u' - u'' = f
+    #   PDE: lambda * u' - nu * u'' = 0
     # with boundary conditions
     #   u(0) = 0,
-    #   u(1) = 0.
-    #
-    # The source function is:
-    #   f(x) = pi * cos(pi*x) + pi^2 * sin(pi*x)
+    #   u(L) = 1.
     #
     # The exact solution is:
-    #   exact(x) = sin(pi*x)
+    #   exact(x) = (exp(Pe*x/L) - 1) / (exp(Pe) - 1)
+    # where
+    #   Pe = U * L / nu
     #
     # The weak form is:
-    #   \int_0_L W du/dx dx + \int_0_L dW/dx du/dx dx =
-    #   \int_0_L W f dx - natural bounary condition
+    #   \int_0_L lambda W du/dx dx + \int_0_L nu dW/dx du/dx dx =
+    #   \int_0_L W f dx + natural bounary condition
 
     # Specify the mesh
     x_start      = 0
     x_end        = 1
-    num_elements = 10
+    num_elements = 200
     mesh = Mesh.uniform_grid(x_start, x_end, num_elements)
 
     # Specify the weak form
     weak_form = WeakForm()
-    weak_form.add_w_du()
-    weak_form.add_dw_du()
+    weak_form.add_dw_du(nu_func)
+    weak_form.add_w_du(lambda_func)
     weak_form.source_function = source_function
+
 
     # Add the boundary conditions
     weak_form.bc_l = BoundaryCondition.dirichlet(value=0)

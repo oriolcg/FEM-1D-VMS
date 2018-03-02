@@ -18,25 +18,53 @@ class LinearElement(object):
         self.x_r = x_r
 
     def W_l(self, x):
-        return (self.x_r - x) / (self.x_r - self.x_l)
+        x = np.asarray(x)
+        y = np.zeros_like(x)
+
+        y += ((x >= self.x_l) & (x <= self.x_r)) * \
+             (self.x_r - x) / (self.x_r - self.x_l)
+
+        return y
 
     def dW_l(self, x):
-        return -1 / (self.x_r - self.x_l)
+        x = np.asarray(x)
+        y = np.zeros_like(x)
+
+        y += ((x >= self.x_l) & (x <= self.x_r)) * \
+             -1 / (self.x_r - self.x_l)
+
+        return y
 
     def W_r(self, x):
-        return (x - self.x_l) / (self.x_r - self.x_l)
+        x = np.asarray(x)
+        y = np.zeros_like(x)
+
+        y += ((x >= self.x_l) & (x <= self.x_r)) * \
+             (x - self.x_l) / (self.x_r - self.x_l)
+
+        return y
 
     def dW_r(self, x):
-        return 1 / (self.x_r - self.x_l)
+        x = np.asarray(x)
+        y = np.zeros_like(x)
+
+        y += ((x >= self.x_l) & (x <= self.x_r)) * \
+             1 / (self.x_r - self.x_l)
+
+        return y
 
     def factor_u_l(self, x):
-        return (self.x_r - x) / (self.x_r - self.x_l)
+        #return (self.x_r - x) / (self.x_r - self.x_l)
+        return self.W_l(x)
 
     def factor_du_l(self, x):
-        return -1 / (self.x_r - self.x_l)
+        #return -1 / (self.x_r - self.x_l)
+        return self.dW_l(x)
 
     def factor_u_r(self, x):
-        return (x - self.x_l) / (self.x_r - self.x_l)
+        #return (x - self.x_l) / (self.x_r - self.x_l)
+        return self.W_r(x)
 
     def factor_du_r(self, x):
-        return 1 / (self.x_r - self.x_l)
+        #return 1 / (self.x_r - self.x_l)
+        return self.dW_r(x)

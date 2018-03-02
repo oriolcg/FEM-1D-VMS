@@ -62,6 +62,6 @@ class Utils(object):
                     f *= function
 
             # Add contribution to result
-            result += w_q[nn] * 0.5 * (x_l - x_r) * f
+            result += w_q[nn] * 0.5 * (x_r - x_l) * f
 
         return result

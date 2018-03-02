@@ -10,7 +10,7 @@ from fem.model import Model
 
 
 def source_function(x):
-    return 50 * np.exp(x)
+    return -50 * np.exp(x)
 
 
 def analytical_solution(x):
@@ -19,23 +19,30 @@ def analytical_solution(x):
 
 def main():
     # The PDE is defined for -L < x < L:
-    #   PDE: u'' = 50 * exp(x)
+    #   PDE: u'' = f
     # with boundary conditions
     #   u(-L) = 100,
     #   u(L) = 100.
     #
+    # The source function is:
+    #   f(x) = 50 * exp(x)
+    #
     # The exact solution is:
     #   exact(x) = -50 * exp(x) + 50 * x * sinh(1) + 100 + 50 * cosh(1)
+    #
+    # The weak form is:
+    #   - \int_0_L dW/dx du/dx dx =
+    #   \int_0_L W f dx - natural bounary condition
 
     # Specify the mesh
     x_start      = -1
     x_end        = 1
-    num_elements = 5
+    num_elements = 10
     mesh = Mesh.uniform_grid(x_start, x_end, num_elements)
 
     # Specify the weak form
     weak_form = WeakForm()
-    weak_form.add_dw_du()
+    weak_form.add_dw_du(constant=-1)
     weak_form.source_function = source_function
 
     # Add the boundary conditions

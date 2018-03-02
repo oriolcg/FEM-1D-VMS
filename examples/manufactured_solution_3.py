@@ -10,39 +10,38 @@ from fem.model import Model
 
 
 def source_function(x):
-    return math.pi * np.cos(math.pi*x) + math.pi ** 2 * np.sin(math.pi*x)
+    return np.cos(math.pi*x)
 
 
 def analytical_solution(x):
-    return np.sin(math.pi * x)
+    return 1/(math.pi**2) * np.cos(math.pi*x) + 2/(math.pi**2) * x - 1/(math.pi**2)
 
 
 def main():
     # The PDE is defined for 0 < x < 1:
-    #   PDE: u' - u'' = f
+    #   PDE: -u'' = f
     # with boundary conditions
     #   u(0) = 0,
     #   u(1) = 0.
     #
     # The source function is:
-    #   f(x) = pi * cos(pi*x) + pi^2 * sin(pi*x)
+    #   f(x) = cos(pi*x)
     #
     # The exact solution is:
-    #   exact(x) = sin(pi*x)
+    #   exact(x) = 1/(pi^2) * cos(pi*x) + 2/(pi^2) * x - 1/(pi^2)
     #
     # The weak form is:
-    #   \int_0_L W du/dx dx + \int_0_L dW/dx du/dx dx =
-    #   \int_0_L W f dx - natural bounary condition
+    #   \int_0_L dW/dx du/dx dx =
+    #   \int_0_L W f dx + natural bounary condition
 
     # Specify the mesh
     x_start      = 0
     x_end        = 1
-    num_elements = 10
+    num_elements = 15
     mesh = Mesh.uniform_grid(x_start, x_end, num_elements)
 
     # Specify the weak form
     weak_form = WeakForm()
-    weak_form.add_w_du()
     weak_form.add_dw_du()
     weak_form.source_function = source_function
 

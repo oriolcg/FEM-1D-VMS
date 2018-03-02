@@ -11,7 +11,7 @@ from fem.model import Model
 
 def analytical_solution(x):
     lam = 5
-    nu = 1
+    nu = 2
     L = 1
 
     Pe = lam * L / nu
@@ -30,10 +30,14 @@ def main():
     #   exact(x) = (exp(Pe*x/L) - 1) / (exp(Pe) - 1)
     # where
     #   Pe = U * L / nu
+    #
+    # The weak form is:
+    #   \int_0_L lambda W du/dx dx + \int_0_L nu dW/dx du/dx dx =
+    #   natural bounary condition
 
     # Physical parameters
     lam = 5
-    nu = 1
+    nu = 2
     L = 1
 
     # Specify the mesh
