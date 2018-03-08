@@ -11,6 +11,10 @@ el = LinearElement(0, 0.2, 0.4)
 print(el.W_l(0.3))
 print(el.dW_l(0.3))
 
-plt.plot(x, el.W_l(x))
-plt.plot(x, el.W_r(x))
+plt.plot(x, el.basis_function(x, local_node=0))
+plt.plot(x, el.basis_function(x, local_node=1))
+plt.show()
+
+plt.plot(x, el.basis_gradient(x, local_node=0))
+plt.plot(x, el.basis_gradient(x, local_node=1))
 plt.show()

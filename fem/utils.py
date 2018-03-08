@@ -7,17 +7,17 @@ import matplotlib.pyplot as plt
 class Utils(object):
 
     @staticmethod
-    def integrate(functions, x_l, x_r, N_q):
+    def integrate(functions, x_l, x_r, quad_points):
         """Performs guassian quadrature on a function or product of multiple
         functions.
 
         Arguments:
-            functions: A function or constant OR a tuple of functions and
+            functions: A callable or constant OR a tuple of callables and
                 constants. If the argument is a tuple, then the integrand is
-                product of the functions and constants in the tuple.
+                product of the callables and constants in the tuple.
             x_l: Leftmost x-coordinate of the integration interval.
             x_r: Rightmost x-coordinate of the integration interval.
-            N_q: Number of Guassian quadrature points up to a maximum of 3.
+            quad_points: Number of Guassian quadrature points.
 
         Returns:
             The integral.
@@ -30,13 +30,13 @@ class Utils(object):
 
         # Set quadrature rule. "w_q" is a list of weights and "xi_q" is a list
         # of quadrature points in the domain -1 < xi < 1.
-        if N_q == 1:
+        if quad_points == 1:
             w_q = [2.0]
             xi_q = [0.0]
-        elif N_q == 2:
+        elif quad_points == 2:
             w_q = [1.0, 1.0]
             xi_q = [-1 / math.sqrt(3), 1 / math.sqrt(3)]
-        elif N_q == 3:
+        elif quad_points == 3:
             w_q = [5/9, 8/9, 5/9]
             xi_q = [-1 * math.sqrt(3/5), 0, math.sqrt(3/5)]
         else:
@@ -45,7 +45,7 @@ class Utils(object):
         result = 0
 
         # Loop over the indices of the quadrature points
-        for nn in range(N_q):
+        for nn in range(quad_points):
             # Get xi location of quadrature point
             xi = xi_q[nn]
 
