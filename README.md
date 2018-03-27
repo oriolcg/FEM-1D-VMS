@@ -1,20 +1,12 @@
 # FEM-1D
 
-This project was born in my attempt to fully comprehend the mathematical foundations of the finite element method. The goal of this repository is to make it SIMPLE to LEARN how the finite element method works. This code is NOT intended to be fast and efficient.
+The goal of this repository is to make it simple to learn how the finite element method works. This code is not intended to be fast and efficient. The code is object-oriented which should make it easy to read and the interface is designed to be intuitive.
 
-The code is OBJECT-ORIENTED which should make it easy to read. The interface to the library is designed to be INTUITIVE: you just need to tell it about the WEAK FORM of the problem and its boundary conditions, specify the mesh, and tell it to compute the solution.
+For now, the code is limited to 1D linear problems and piecewise linear basis functions. The code can solve any problem of the form:
 
-For now, the code is limited to 1D linear problems and piecewise linear basis functions. The code can solve ANY problem of the general form:
+```-d/dx ( p(x) * du/dx ) + q(x) * u + r(x) * du/dx = f(x)```
 
-```a u'' + b u' + c u = f(x)```
-
-where `a`, `b`, and `c` are constants. Dirichlet and Neumann boundary conditions are supported.
-
-The code MIGHT be able to solve problems of the general form:
-
-```a(x) u'' + b(x) u' + c(x) u = f(x)```
-
-More testing is necessary before these problems are fully supported.
+Here U is an unknown scalar function of X defined on the interval [X_LEFT, X_RIGHT]. Both Dirichlet and Neumann boundary conditions are supported.
 
 ### Getting the code
 
@@ -34,7 +26,7 @@ pip install -r requirements.txt
 
 ### Usage
 
-Check out the examples in the examples folder. More examples and explanation coming soon.
+Check out the examples in the examples folder. More examples and are coming soon.
 
 ### Author
 

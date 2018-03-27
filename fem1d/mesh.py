@@ -1,7 +1,7 @@
 import sys
 import math
 import numpy as np
-from fem.element import LinearElement
+from fem1d.element import LinearElement
 
 
 class Mesh(object):

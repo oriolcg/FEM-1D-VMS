@@ -3,71 +3,110 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 sys.path.insert(0, "..")
-from fem.mesh import Mesh
-from fem.weakform import WeakForm
-from fem.boundarycondition import BoundaryCondition
-from fem.model import Model
+from fem1d.mesh import Mesh
+from fem1d.model import Model
 
 
-def source_function(x):
-    return -1.0
+def p(x):
+    x = np.asarray(x)
+    return -np.ones_like(x)
 
 
-def analytical_solution(x):
+def q(x):
+    x = np.asarray(x)
+    return np.zeros_like(x)
+
+
+def r(x):
+    x = np.asarray(x)
+    return np.zeros_like(x)
+
+
+def f(x):
+    x = np.asarray(x)
+    return -np.ones_like(x)
+
+
+def u_exact(x):
     return -0.5*x*x + 2*x
 
 
 def main():
-    # The PDE is defined for -L < x < L:
-    #   PDE: u'' = f
-    # with boundary conditions
-    #   u(0) = 0,
-    #   u(L) = 0.
     #
-    # The source function is:
-    #   f(x) = -1
+    # Discussion:
     #
-    # The exact solution is:
-    #   exact(x) = -0.5*x^2 + 2*x
+    #   Solves a linear 1D boundary value problem.
     #
-    # The weak form is:
-    #   - \int_0_L dW/dx du/dx dx =
-    #   \int_0_L W f dx - natural bounary condition
+    #   The differential equation has the form:
+    #
+    #     -d/dx ( p(x) du/dx ) + q(x) * u + r(x) * du/dx = f(x)
+    #
+    #   The finite element method uses piecewise linear basis
+    #   functions.
+    #
+    #   Here U is an unknown scalar function of X defined on the
+    #   interval [XL, XR], and P, Q, R, and F are given functions of X.
+    #
+    #
+    #   The differential equation is defined for 0 < x < 4:
+    #     
+    #     u'' = f
+    #
+    #   with boundary conditions
+    #
+    #     u(0) = 0,
+    #     u(1) = 0.
+    #
+    #   The source function is:
+    #
+    #     f(x) = -1
+    #
+    #   The exact solution is:
+    #
+    #     exact(x) = -0.5*x^2 + 2*x
+    #
 
-    # Specify the mesh
-    x_start      = 0
-    x_end        = 4
+    # Initialize variables that define the problem.
+
     num_elements = 10
-    mesh = Mesh.uniform_grid(x_start, x_end, num_elements)
+    bc_type = 1
+    quadrature_points = 2
+    bc_left = 0.0
+    bc_right = 0.0
+    x_left = 0
+    x_right = 4
 
-    # Specify the weak form
-    weak_form = WeakForm()
-    weak_form.add_dw_du(constant=-1)
-    weak_form.source_function = source_function
+    # Create the mesh object that describes the geometry of the problem.
 
-    # Add the boundary conditions
-    weak_form.bc_l = BoundaryCondition.dirichlet(value=0)
-    weak_form.bc_r = BoundaryCondition.dirichlet(value=0)
+    mesh = Mesh.uniform_grid(x_left, x_right, num_elements)
 
-    # Create the model object
-    model = Model(mesh, weak_form)
+    # Create the model object.
+
+    model = Model(mesh, p, q, r, f, bc_type, bc_left, bc_right, 
+        quadrature_points)
+
+    # Solve the problem.
+
     model.solve()
 
-    u_analytical = analytical_solution(mesh.x)
-    error = np.abs(u_analytical - model.u)
+    # Compute the exact solution
+
+    u_e = u_exact(mesh.x)
+    error = np.abs(u_e - model.u)
 
     # Print nodal error
+
     print("")
-    print("  Node          Ucomp           Uexact          Error")
+    print("        X             U(X)          U(exact)      Error")
     print("")
 
     for i in range(0, num_elements + 1):
-        print("{:4d}  {:14.6g}  {:14.6g}  {:14.6g}".format(i, model.u[i],
-              u_analytical[i], error[i]))
+        print("  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}".format(mesh.x[i], \
+            model.u[i], u_e[i], error[i]))
 
     # Plot solution
-    fine_mesh = Mesh.uniform_grid(x_start, x_end, num_elements*100)
-    plt.plot(fine_mesh.x, analytical_solution(fine_mesh.x), "k", linewidth=1)
+    fine_mesh = Mesh.uniform_grid(x_left, x_right, num_elements*100)
+    plt.plot(fine_mesh.x, u_exact(fine_mesh.x), "k", linewidth=1)
     plt.plot(model.mesh.x, model.u, "k*-", linewidth=1)
     #plt.savefig("fem_results.eps")
     plt.show()

@@ -3,13 +3,35 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 sys.path.insert(0, "..")
-from fem.mesh import Mesh
-from fem.weakform import WeakForm
-from fem.boundarycondition import BoundaryCondition
-from fem.model import Model
+from fem1d.mesh import Mesh
+from fem1d.model import Model
 
 
-def analytical_solution(x):
+def p(x):
+    nu = 2
+
+    x = np.asarray(x)
+    return nu * np.ones_like(x)
+
+
+def q(x):
+    x = np.asarray(x)
+    return np.zeros_like(x)
+
+
+def r(x):
+    lam = 5
+
+    x = np.asarray(x)
+    return lam * np.ones_like(x)
+
+
+def f(x):
+    x = np.asarray(x)
+    return np.zeros_like(x)
+
+
+def u_exact(x):
     lam = 5
     nu = 2
     L = 1
@@ -20,63 +42,77 @@ def analytical_solution(x):
 
 
 def main():
-    # The PDE is defined for 0 < x < 1:
-    #   PDE: lambda * u' - nu * u'' = 0
-    # with boundary conditions
-    #   u(0) = 0,
-    #   u(L) = 1.
     #
-    # The exact solution is:
-    #   exact(x) = (exp(Pe*x/L) - 1) / (exp(Pe) - 1)
-    # where
-    #   Pe = U * L / nu
+    # Discussion:
     #
-    # The weak form is:
-    #   \int_0_L lambda W du/dx dx + \int_0_L nu dW/dx du/dx dx =
-    #   natural bounary condition
+    #   Solves a linear 1D boundary value problem.
+    #
+    #   The differential equation has the form:
+    #
+    #     -d/dx ( p(x) du/dx ) + q(x) * u + r(x) * du/dx = f(x)
+    #
+    #   The finite element method uses piecewise linear basis
+    #   functions.
+    #
+    #   Here U is an unknown scalar function of X defined on the
+    #   interval [XL, XR], and P, Q, R, and F are given functions of X.
+    #
+    #
+    #   The differential equation is defined for 0 < x < 1:
+    #     
+    #     -nu * u'' + lambda * u' = 0
+    #
+    #   with boundary conditions
+    #
+    #     u(0) = 0,
+    #     u(1) = 1.
+    #
+    #   The exact solution is:
+    #
+    #     exact(x) = (exp(Pe * x / L) - 1) / (exp(Pe) - 1)
+    #
 
-    # Physical parameters
-    lam = 5
-    nu = 2
-    L = 1
+    # Initialize variables that define the problem.
 
-    # Specify the mesh
-    x_start      = 0
-    x_end        = L
     num_elements = 10
-    mesh = Mesh.non_uniform_grid(x_start, x_end, num_elements, ratio=0.7)
-    #mesh = Mesh.uniform_grid(x_start, x_end, num_elements)
+    bc_type = 1
+    quadrature_points = 2
+    bc_left = 0.0
+    bc_right = 1.0
+    x_left = 0
+    x_right = 1
 
-    # Specify the weak form
-    weak_form = WeakForm()
-    weak_form.add_dw_du(nu)
-    weak_form.add_w_du(lam)
-    # The right-hand side is set to zero when there is no source function, so
-    # there is nothing to specify for the right-hand side
+    # Create the mesh object that describes the geometry of the problem.
 
-    # Add the boundary conditions
-    weak_form.bc_l = BoundaryCondition.dirichlet(value=0)
-    weak_form.bc_r = BoundaryCondition.dirichlet(value=1)
+    mesh = Mesh.uniform_grid(x_left, x_right, num_elements)
 
-    # Create the model object
-    model = Model(mesh, weak_form)
+    # Create the model object.
+
+    model = Model(mesh, p, q, r, f, bc_type, bc_left, bc_right, 
+        quadrature_points)
+
+    # Solve the problem.
+
     model.solve()
 
-    u_analytical = analytical_solution(mesh.x)
-    error = np.abs(u_analytical - model.u)
+    # Compute the exact solution
+
+    u_e = u_exact(mesh.x)
+    error = np.abs(u_e - model.u)
 
     # Print nodal error
+
     print("")
-    print("  Node          Ucomp           Uexact          Error")
+    print("        X             U(X)          U(exact)      Error")
     print("")
 
     for i in range(0, num_elements + 1):
-        print("{:4d}  {:14.6g}  {:14.6g}  {:14.6g}".format(i, model.u[i],
-              u_analytical[i], error[i]))
+        print("  {:12.6f}  {:12.6f}  {:12.6f}  {:12.6f}".format(mesh.x[i], \
+            model.u[i], u_e[i], error[i]))
 
     # Plot solution
-    fine_mesh = Mesh.uniform_grid(x_start, x_end, num_elements*100)
-    plt.plot(fine_mesh.x, analytical_solution(fine_mesh.x), "k", linewidth=1)
+    fine_mesh = Mesh.uniform_grid(x_left, x_right, num_elements*100)
+    plt.plot(fine_mesh.x, u_exact(fine_mesh.x), "k", linewidth=1)
     plt.plot(model.mesh.x, model.u, "k*-", linewidth=1)
     #plt.savefig("fem_results.eps")
     plt.show()
