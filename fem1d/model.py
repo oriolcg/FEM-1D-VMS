@@ -81,12 +81,14 @@ class Model(object):
 
         self.u = np.zeros(self.mesh.num_elements+1)
 
-        self.__assemble()
+        self.assemble()
+
+        self.__applyBC()
 
         self.u = np.linalg.solve(self.K, self.F)
 
 
-    def __assemble(self):
+    def assemble(self):
 
         self.K = np.zeros((self.mesh.num_elements+1, self.mesh.num_elements+1))
         self.F = np.zeros_like(self.u)
@@ -180,6 +182,8 @@ class Model(object):
 
                     f = basis_i * self.f(x)
                     self.F[e+i] += w * f
+
+    def __applyBC(self):
 
         # Now that the stiffness matrix K and the vector F are
         # assembled, let us approach the boundary conditions.
