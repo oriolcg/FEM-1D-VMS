@@ -2,7 +2,7 @@ import sys
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-
+from fem1d.quadrature_rule import QuadratureRule
 
 class Utils(object):
 
@@ -30,24 +30,14 @@ class Utils(object):
 
         # Set quadrature rule. "w_q" is a list of weights and "xi_q" is a list
         # of quadrature points in the domain -1 < xi < 1.
-        if quad_points == 1:
-            w_q = [2.0]
-            xi_q = [0.0]
-        elif quad_points == 2:
-            w_q = [1.0, 1.0]
-            xi_q = [-1 / math.sqrt(3), 1 / math.sqrt(3)]
-        elif quad_points == 3:
-            w_q = [5/9, 8/9, 5/9]
-            xi_q = [-1 * math.sqrt(3/5), 0, math.sqrt(3/5)]
-        else:
-            raise ValueError("Unknown quadrature rule.")
-
+        quad_rule = QuadratureRule(quad_points)
+        
         result = 0
 
         # Loop over the indices of the quadrature points
         for nn in range(quad_points):
             # Get xi location of quadrature point
-            xi = xi_q[nn]
+            xi = quad_rule.xi_q[nn]
 
             # Calculate x location of quadrature point
             x_q = x_l + 0.5 * (1 + xi) * (x_r - x_l)
@@ -62,6 +52,6 @@ class Utils(object):
                     f *= function
 
             # Add contribution to result
-            result += w_q[nn] * 0.5 * (x_r - x_l) * f
+            result += quad_rule.w_q[nn] * 0.5 * (x_r - x_l) * f
 
         return result

@@ -4,6 +4,7 @@ import math
 from functools import partial
 from fem1d.utils import Utils
 from fem1d.model import Model
+from fem1d.quadrature_rule import QuadratureRule
 
 
 class VMSModel(Model):
@@ -14,21 +15,18 @@ class VMSModel(Model):
     def solve(self):
         Model.solve(self)
 
+    def computeTau(self,element, x):
+        # Pe = h * r / (  2 * p )
+        # tau = h / (2 * r) * ( coth(Pe) - 1/Pe )
+        Pe = element.h * self.r(x) / ( 2.0 * self.p(x) )
+        return element.h / ( 2.0 * self.r(x) ) * ( 1.0 / math.tanh( Pe ) - 1.0 / Pe )
+
+
     def assemble(self):
         Model.assemble(self)
 
-        if self.num_quad_points == 1:
-            w_q = [2.0]
-            xi_q = [0.0]
-        elif self.num_quad_points == 2:
-            w_q = [1.0, 1.0]
-            xi_q = [-1 / math.sqrt(3), 1 / math.sqrt(3)]
-        elif self.num_quad_points == 3:
-            w_q = [5/9, 8/9, 5/9]
-            xi_q = [-1 * math.sqrt(3/5), 0, math.sqrt(3/5)]
-        else:
-            raise ValueError("Unknown quadrature rule.")
-
+        # Set Quadrature rule
+        quad_rule = QuadratureRule( self.num_quad_points )
 
         # Loop over elements.
 
@@ -49,13 +47,13 @@ class VMSModel(Model):
                     for k in range(self.num_quad_points):
 
                         # Get xi location of quadrature point.
-                        xi = xi_q[k]
+                        xi = quad_rule.xi_q[k]
 
                         # Calculate x location of quadrature point.
                         x = element.x_left + 0.5 * (1 + xi) * element.h
 
                         # Calculate quadrature weight.
-                        w = w_q[k] * 0.5 * element.h
+                        w = quad_rule.w_q[k] * 0.5 * element.h
 
                         # Compute the values of the basis functions and
                         # its gradients at nodes I and J.
@@ -65,10 +63,7 @@ class VMSModel(Model):
                         basis_j_x = element.basis_gradient(x=x, local_node=j)
 
                         # Compute time-scale parameter
-                        # Pe = h * r / (  2 * p )
-                        # tau = h / (2 * r) * ( coth(Pe) - 1/Pe )
-                        Pe = element.h * self.r(x) / ( 2.0 * self.p(x) )
-                        tau = element.h / ( 2.0 * self.r(x) ) * ( 1.0 / math.tanh( Pe ) - 1.0 / Pe )
+                        tau = self.computeTau(element,x)
 
                         # Compute the LHS contribution of the integral of the stabilization term:
                         #    tau * Residual(u) * Ladj(W).
@@ -87,22 +82,19 @@ class VMSModel(Model):
                 for k in range(self.num_quad_points):
 
                     # Get xi location of quadrature point
-                    xi = xi_q[k]
+                    xi = quad_rule.xi_q[k]
 
                     # Calculate x location of quadrature point
                     x = element.x_left + 0.5 * (1 + xi) * element.h
 
                     # Calculate quadrature weight
-                    w = w_q[k] * 0.5 * element.h
+                    w = quad_rule.w_q[k] * 0.5 * element.h
 
                     basis_i = element.basis_function(x=x, local_node=i)
                     basis_i_x = element.basis_gradient(x=x, local_node=i)
 
                     # Compute time-scale parameter
-                    # Pe = h * r / (  2 * p )
-                    # tau = h / (2 * r) * ( coth(Pe) - 1/Pe )
-                    Pe = element.h * self.r(x) / ( 2.0 * self.p(x) )
-                    tau = element.h / ( 2.0 * self.r(x) ) * ( 1.0 / math.tanh( Pe ) - 1.0 / Pe )
+                    tau = self.computeTau(element,x)
 
                     # Compute the LHS contribution of the integral of the stabilization term:
                     #    tau * Residual(u) * Ladj(W).

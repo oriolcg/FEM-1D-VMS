@@ -3,7 +3,7 @@ import numpy as np
 import math
 from functools import partial
 from fem1d.utils import Utils
-
+from fem1d.quadrature_rule import QuadratureRule
 
 class Model(object):
     #
@@ -93,17 +93,8 @@ class Model(object):
         self.K = np.zeros((self.mesh.num_elements+1, self.mesh.num_elements+1))
         self.F = np.zeros_like(self.u)
 
-        if self.num_quad_points == 1:
-            w_q = [2.0]
-            xi_q = [0.0]
-        elif self.num_quad_points == 2:
-            w_q = [1.0, 1.0]
-            xi_q = [-1 / math.sqrt(3), 1 / math.sqrt(3)]
-        elif self.num_quad_points == 3:
-            w_q = [5/9, 8/9, 5/9]
-            xi_q = [-1 * math.sqrt(3/5), 0, math.sqrt(3/5)]
-        else:
-            raise ValueError("Unknown quadrature rule.")
+        # Set Quadrature rule
+        quad_rule = QuadratureRule( self.num_quad_points )
 
         # Loop over elements.
 
@@ -124,13 +115,13 @@ class Model(object):
                     for k in range(self.num_quad_points):
 
                         # Get xi location of quadrature point.
-                        xi = xi_q[k]
+                        xi = quad_rule.xi_q[k]
 
                         # Calculate x location of quadrature point.
                         x = element.x_left + 0.5 * (1 + xi) * element.h
 
                         # Calculate quadrature weight.
-                        w = w_q[k] * 0.5 * element.h
+                        w = quad_rule.w_q[k] * 0.5 * element.h
 
                         # Compute the values of the basis functions and
                         # its gradients at nodes I and J.
@@ -166,13 +157,13 @@ class Model(object):
                 for k in range(self.num_quad_points):
 
                     # Get xi location of quadrature point
-                    xi = xi_q[k]
+                    xi = quad_rule.xi_q[k]
 
                     # Calculate x location of quadrature point
                     x = element.x_left + 0.5 * (1 + xi) * element.h
 
                     # Calculate quadrature weight
-                    w = w_q[k] * 0.5 * element.h
+                    w = quad_rule.w_q[k] * 0.5 * element.h
 
                     basis_i = element.basis_function(x=x, local_node=i)
 
@@ -216,3 +207,28 @@ class Model(object):
 
             self.F[-1] += self.bc_right
 
+
+    def interpolate(self, element, k, num_quad_points):
+
+        e = element.index
+        u = 0.0
+        
+        # Set Quadrature rule
+        quad_rule = QuadratureRule( num_quad_points )
+
+        # Loop over basis functions.
+        for i in range(element.num_nodes):
+            
+            # Get xi location of quadrature point.
+            xi = quad_rule.xi_q[k]
+
+            # Calculate x location of quadrature point.
+            x = element.x_left + 0.5 * (1 + xi) * element.h
+
+            # Compute the values of the basis functions.
+            basis_i = element.basis_function(x=x, local_node=i)
+            
+            # Interpolate solution
+            u += basis_i * self.u[e+i]
+
+        return u
