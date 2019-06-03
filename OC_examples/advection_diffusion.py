@@ -2,7 +2,6 @@ import sys
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-sys.path.insert(0, "..")
 from fem1d.mesh import Mesh
 from fem1d.model import Model
 from fem1d.vms_model import VMSModel
@@ -46,7 +45,7 @@ def qoiFunc(x):
     return 1.0 / L * np.ones_like(x)
     
 
-def main():
+def main(NELEM, VELOCITY, DIFFUSION, REACTION, SOURCE):
     #
     # Discussion:
     #
@@ -81,7 +80,7 @@ def main():
     # Initialize variables that define the problem.
     # =============================================
     # Mesh properties
-    num_elements = 10
+    num_elements = NELEM
     bc_type = 1
     quadrature_points = 2
     bc_left = 0.0
@@ -96,10 +95,10 @@ def main():
     global nu
     global react
     global source
-    lam = 1.0
-    nu = 1.0e-2
-    react = 0.0
-    source = 1.0
+    lam = VELOCITY
+    nu = DIFFUSION
+    react = REACTION
+    source = SOURCE
 
     # Compute Peclet number
     h = L / float(num_elements)
@@ -128,8 +127,8 @@ def main():
     
     # Compute Quantity of Interest
     # ============================
-    qoi_gal = QoI(gal_model, qoiFunc, u_exact, 10)
-    qoi_vms = QoI(vms_model, qoiFunc, u_exact, 10)
+    qoi_gal = QoI(gal_model, qoiFunc, u_exact, 20)
+    qoi_vms = QoI(vms_model, qoiFunc, u_exact, 20)
     qoi_gal.compute()
     qoi_vms.compute()
     qoi_vms.error_estimator()
@@ -156,16 +155,33 @@ def main():
     print ' Error_VMS:  ', abs(qoi_vms.value_exact - qoi_vms.value )
     print ' Error_est:  ', abs(qoi_vms.error_est)
     print ' Efficiency: ', abs(qoi_vms.error_est) / abs(qoi_vms.value_exact - qoi_vms.value )
+                
         
     # Plot solution
     # =============
     fine_mesh = Mesh.uniform_grid(x_left, x_right, num_elements*100)
-    plt.plot(fine_mesh.x, u_exact(fine_mesh.x), "k", linewidth=1)
-    plt.plot(gal_model.mesh.x, gal_model.u, "k*-", linewidth=1)
-    plt.plot(vms_model.mesh.x, vms_model.u, "ks-", linewidth=1)
+    plt.plot(fine_mesh.x, u_exact(fine_mesh.x), "k", linewidth=1, label='exact')
+    plt.plot(gal_model.mesh.x, gal_model.u, "k*-", linewidth=1, label='Galerkin')
+    plt.plot(vms_model.mesh.x, vms_model.u, "ks-", linewidth=1, label='VMS')
+    plt.ylim(bottom=0.0)
+    plt.legend(loc='best')
+    plt.title(r'Galerkin and VMS solutions for $\nu=0.01$ and $N_{el}=20$ ($Pe=2.5$)')
+    plt.ylabel(r'u(x)')
+    plt.xlabel(r'x')
     #plt.savefig("fem_results.eps")
     #plt.show()
 
 
 if __name__ == '__main__':
-    main()
+
+    filename = sys.argv[1]
+    file = open(filename,'r')
+    data = file.readlines()
+    dictionary= {}
+    for datum in data:
+        if( len(datum.split('=')) > 1 ):
+            key = datum.split('=')[0].strip()
+            value = float(datum.split('=')[1].strip())
+            dictionary.update({key:value})
+    
+    main(dictionary.get('NELEM'), dictionary.get('VELOCITY'), dictionary.get('DIFFUSION'), dictionary.get('REACTION'), dictionary.get('SOURCE'))

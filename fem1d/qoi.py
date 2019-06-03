@@ -38,7 +38,7 @@ class QoI(object):
 
         self.value = 0.0
         self.value_exact = 0.0
-
+            
         # Set Quadrature rule
         quad_rule = QuadratureRule( self.num_quad_points )
 
@@ -63,13 +63,14 @@ class QoI(object):
 
                 # Interpolate solution at quadrature point.
                 u = self.model.interpolate( element, k, self.num_quad_points )
-
+                
                 # Compute the integral:
                 #    qFunc(x) * u(x)
                 f = self.qFunc(x) * u
-                f_e = self.qFunc(x) * self.u_exact(x)
+                f_e = self.qFunc(x) * self.u_exact(x)                
                 self.value += w * f
                 self.value_exact += w * f_e
+
 
     def error_estimator(self):
         
@@ -85,39 +86,45 @@ class QoI(object):
 
             e = element.index
 
-            # Loop over basis functions.
+            # Loop over quadrature points.
             
-            for i in range(element.num_nodes):
-                
-                # Loop over quadrature points.
-                
-                for k in range(self.num_quad_points):
+            for k in range(self.num_quad_points):
                     
-                    # Get xi location of quadrature point
-                    xi = quad_rule.xi_q[k]
+                # Get xi location of quadrature point
+                xi = quad_rule.xi_q[k]
 
-                    # Calculate x location of quadrature point
-                    x = element.x_left + 0.5 * (1 + xi) * element.h
+                # Calculate x location of quadrature point
+                x = element.x_left + 0.5 * (1 + xi) * element.h
 
-                    # Calculate quadrature weight
-                    w = quad_rule.w_q[k] * 0.5 * element.h
+                # Calculate quadrature weight
+                w = quad_rule.w_q[k] * 0.5 * element.h
 
+                # Compute time-scale parameter
+                tau = self.computeTau(element,x)
+
+                # Interpolate values
+                u = 0.0
+                du = 0.0
+                
+                # Loop over basis functions.
+                for i in range(element.num_nodes):
+                                
                     # Compute the values of the basis functions and
                     # its gradients at node I.
                     basis_i = element.basis_function(x=x, local_node=i)
                     basis_i_x = element.basis_gradient(x=x, local_node=i)
 
-                    # Compute time-scale parameter
-                    tau = self.computeTau(element,x)
+                    u += basis_i * self.model.u[e+i]
+                    du += basis_i_x * self.model.u[e+i]
 
-                    # Compute the contribution of the integral of the stabilization term:
-                    #    tau * Residual(u).
-                    # with:
-                    #    Residual(u) = f(x) - [ -d/dx ( p(x) du/dx ) + q(x) * u + r(x) * du/dx  ]
-                    # Note that for linear elements the second order derivatives are zero
-                    Residual = self.model.f(x) - ( self.model.q(x) * basis_i * self.model.u[e+i] + self.model.r(x) * basis_i_x * self.model.u[e+i] )
-                    f = self.qFunc(x) * tau * Residual
-                    self.error_est += w * f
+                # Compute the contribution of the integral of the stabilization term:
+                #    tau * Residual(u).
+                # with:
+                #    Residual(u) = f(x) - [ -d/dx ( p(x) du/dx ) + q(x) * u + r(x) * du/dx  ]
+                # Note that for linear elements the second order derivatives are zero
+                Residual = self.model.f(x) - ( self.model.q(x) * u + self.model.r(x) * du )
+                f = self.qFunc(x) * tau * Residual
+                self.error_est += w * f
 
 
                 # Add jump contribution
