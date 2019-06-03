@@ -1,3 +1,7 @@
+# FEM-1D-VMS
+
+1D Finite Element code for the Convection-Diffusion-Reaction equation with Variational Multiscale stabilization. Code forked from https://github.com/michelrobijns/FEM-1D
+
 # FEM-1D
 
 The goal of this repository is to make it simple to learn how the finite element method works. This code is not intended to be fast and efficient. The code is object-oriented which should make it easy to read and the interface is designed to be intuitive.
